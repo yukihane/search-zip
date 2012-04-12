@@ -10,11 +10,13 @@ import java.util.zip.ZipFile;
 public class Finder {
 
     public static void main(String[] args) throws IOException {
-        List<String> list = new ArrayList<String>(0);
+        List<String> list = new ArrayList<String>();
 
         File dir = new File(args[0]);
         for (File f : dir.listFiles()) {
-            list = listZip(f);
+            if (f.isFile() && f.getName().endsWith(".zip")) {
+                list.addAll(listZip(f));
+            }
         }
 
         for (String s : list) {
