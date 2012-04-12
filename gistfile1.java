@@ -13,13 +13,29 @@ public class Finder {
     public static final String TEXT = "-t";
     public static final String OUTPUT = "-o";
 
+    private static class FileInfo {
+
+        private final String name;
+        private final Date time;
+
+        private FileInfo(String name, long time) {
+            this.name = name;
+            this.time = new Date(time);
+        }
+
+        @Override
+        public String toString() {
+            return "" + time + "\t" + name;
+        }
+    }
+
     public static void main(String[] args) throws IOException {
         Map<String, String> am = new HashMap<String, String>();
         for (int i = 0; i < args.length; i += 2) {
             am.put(args[i], args[i + 1]);
         }
 
-        List<String> list = new ArrayList<String>();
+        List<FileInfo> list = new ArrayList<FileInfo>();
 
         File dir = new File(am.get(DIRECTORY));
         for (File f : dir.listFiles()) {
@@ -28,16 +44,16 @@ public class Finder {
             }
         }
 
-        for (String s : list) {
+        for (FileInfo s : list) {
             System.out.println(s);
         }
     }
 
-    private static List<String> listZip(File f) {
+    private static List<FileInfo> listZip(File f) {
         try {
             ZipFile zip = new ZipFile(f.getAbsolutePath());
             Enumeration<? extends ZipEntry> enu = zip.entries();
-            List<String> ret = new ArrayList<String>();
+            List<FileInfo> ret = new ArrayList<FileInfo>();
             while (enu.hasMoreElements()) {
                 ret.addAll(listFile((ZipEntry) enu.nextElement()));
             }
@@ -48,13 +64,10 @@ public class Finder {
         }
     }
 
-    private static List<String> listFile(ZipEntry entry) throws IOException {
-        List<String> ret = new ArrayList<String>();
-        String name = entry.getName();
-        if (entry.isDirectory()) {
-            ret.add("Dir :" + name);
-        } else {
-            ret.add("File:" + name);
+    private static List<FileInfo> listFile(ZipEntry entry) throws IOException {
+        List<FileInfo> ret = new ArrayList<FileInfo>();
+        if (!entry.isDirectory()) {
+            ret.add(new FileInfo(entry.getName(), entry.getTime()));
         }
         return ret;
     }
