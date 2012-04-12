@@ -1,18 +1,27 @@
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Finder {
 
+    public static final String DIRECTORY = "-dir";
+    public static final String DATE_MIN = "-dm";
+    public static final String DATE_MAX = "-dM";
+    public static final String TEXT = "-t";
+    public static final String OUTPUT = "-o";
+
     public static void main(String[] args) throws IOException {
+        Map<String, String> am = new HashMap<String, String>();
+        for (int i = 0; i < args.length; i += 2) {
+            am.put(args[i], args[i + 1]);
+        }
+
         List<String> list = new ArrayList<String>();
 
-        File dir = new File(args[0]);
+        File dir = new File(am.get(DIRECTORY));
         for (File f : dir.listFiles()) {
             if (f.isFile() && f.getName().endsWith(".zip")) {
                 list.addAll(listZip(f));
