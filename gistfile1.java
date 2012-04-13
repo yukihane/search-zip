@@ -1,26 +1,31 @@
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import static java.util.Calendar.MONTH;
 import static java.util.Calendar.YEAR;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 public class Search {
 
+    public static final String DATE_PATTERN = "yyyy/MM/dd HH:mm:ss";
     // 共通オプション
     public static final String MODE = "-mode";
     public static final String DIRECTORY = "-dir";
     // 以下indexモード用オプション
     public static final String DATE = "-date";
     //以下searchモード用オプション
+    public static final String INDEX = "-index";
     public static final String DATE_MIN = "-dm";
     public static final String DATE_MAX = "-dM";
-    public static final String TEXT = "-t";
-    public static final String OUTPUT = "-o";
+    public static final String TEXT = "-text";
+    public static final String OUTPUT_DIRECTORY = "-o";
 
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> am = new HashMap<String, String>();
@@ -33,7 +38,15 @@ public class Search {
             final Date date = DateFormat.getDateInstance().parse(am.get(DATE));
             new Indexer().index(new File(am.get(DIRECTORY)), date);
         } else if ("search".equals(mode)) {
-            new Finder().find();
+            final File index = new File(am.get(INDEX));
+            final File inDir = new File(am.get(DIRECTORY));
+            final File outDir = new File(am.get(OUTPUT_DIRECTORY));
+            final String text = am.get(TEXT);
+            final DateFormat df = DateFormat.getInstance();
+            final Date dateMin = df.parse(am.get(DATE_MIN));
+            final Date dateMax = df.parse(am.get(DATE_MAX));
+
+            new Finder().find(text, index, dateMin, dateMax, inDir, outDir);
         }
     }
 
@@ -51,7 +64,8 @@ public class Search {
 
             @Override
             public String toString() {
-                return "" + time + "\t" + name;
+                final SimpleDateFormat sdf = new SimpleDateFormat(DATE_PATTERN);
+                return "" + sdf.format(time) + "\t" + name;
             }
         }
 
@@ -102,8 +116,81 @@ public class Search {
 
     public static class Finder {
 
-        private void find() {
-            throw new UnsupportedOperationException("Not yet implemented");
+        public static final Pattern ZIP_FILE_PATTERN = Pattern.compile("^==(.*)==$");
+
+        public void find(String text, File index, Date dateMin, Date dateMax, File inDir, File outDir) throws
+                IOException, ParseException {
+            final Pattern pattern = Pattern.compile(text);
+            final BufferedReader reader = new BufferedReader(new FileReader(index));
+
+            String line;
+            String zipFile = null;
+            while ((line = reader.readLine()) != null) {
+                final Matcher zipMatcher = ZIP_FILE_PATTERN.matcher(line);
+                if (zipMatcher.matches()) {
+                    zipFile = zipMatcher.group(1);
+                } else {
+                    final String[] info = line.split("\t");
+                    final SimpleDateFormat sdf = new SimpleDateFormat(DATE_PATTERN);
+                    final Date timeStamp = sdf.parse(info[0]);
+                    final String entryName = info[1];
+
+                    if (timeStamp.after(dateMin) && timeStamp.before(dateMax)) {
+                        final ZipInputStream zis = new ZipInputStream(new FileInputStream(new File(inDir, zipFile)));
+                        for (ZipEntry ze = zis.getNextEntry(); ze != null; ze = zis.getNextEntry()) {
+                            if (entryName.equals(ze.getName())) {
+                                System.out.println("CANDIDATE: " + entryName);
+                                File outFile = extract(outDir, entryName, zis, timeStamp);
+
+                                checkText(outFile, pattern);
+                            }
+                        }
+                        zis.close();
+                    }
+                }
+
+
+            }
+        }
+
+        public File extract(final File outDir, final String entryName, final ZipInputStream zis, final Date timeStamp)
+                throws
+                IOException {
+            final String[] splittedEntryName = entryName.split("/");
+            final String baseName = splittedEntryName[splittedEntryName.length - 1];
+            final File outFile = new File(outDir, baseName);
+
+            final BufferedOutputStream bos = new BufferedOutputStream(
+                    new FileOutputStream(outFile));
+            final byte[] b = new byte[1024 * 1024];
+            int len;
+            while ((len = zis.read(b, 0, b.length)) != -1) {
+                bos.write(b, 0, len);
+            }
+            bos.close();
+            outFile.setLastModified(timeStamp.getTime());
+            return outFile;
+        }
+
+        public void checkText(final File outFile, final Pattern pattern) throws IOException {
+            final BufferedReader br = new BufferedReader(new FileReader(outFile));
+            String line;
+            boolean matched = false;
+            while ((line = br.readLine()) != null) {
+                final Matcher m = pattern.matcher(line);
+                if (m.find()) {
+                    matched = true;
+                    break;
+                }
+            }
+            br.close();
+
+            if (!matched) {
+                System.out.println("NO MACH,DELETE: " + outFile);
+                outFile.delete();
+            } else {
+                System.out.println("HIT: " + outFile);
+            }
         }
     }
 }
