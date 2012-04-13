@@ -7,13 +7,14 @@ import java.util.zip.ZipFile;
 
 public class Finder {
 
+    public static final String MODE = "-mode"
     public static final String DIRECTORY = "-dir";
     public static final String DATE_MIN = "-dm";
     public static final String DATE_MAX = "-dM";
     public static final String TEXT = "-t";
     public static final String OUTPUT = "-o";
 
-    private static class FileInfo {
+    public static class FileInfo {
 
         private final String name;
         private final Date time;
@@ -49,7 +50,7 @@ public class Finder {
         }
     }
 
-    private static List<FileInfo> listZip(File f) {
+    public static List<FileInfo> listZip(File f) {
         try {
             ZipFile zip = new ZipFile(f.getAbsolutePath());
             Enumeration<? extends ZipEntry> enu = zip.entries();
@@ -64,7 +65,7 @@ public class Finder {
         }
     }
 
-    private static List<FileInfo> listFile(ZipEntry entry) throws IOException {
+    public static List<FileInfo> listFile(ZipEntry entry) throws IOException {
         List<FileInfo> ret = new ArrayList<FileInfo>();
         if (!entry.isDirectory()) {
             ret.add(new FileInfo(entry.getName(), entry.getTime()));
