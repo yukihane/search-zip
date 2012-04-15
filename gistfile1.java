@@ -3,8 +3,6 @@ import java.io.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import static java.util.Calendar.MONTH;
-import static java.util.Calendar.YEAR;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,7 +17,7 @@ public class Search {
     public static final String MODE = "-mode";
     public static final String DIRECTORY = "-dir";
     // 以下indexモード用オプション
-    public static final String DATE = "-date";
+    public static final String FILE_NAME_PATTERN = "-pattern";
     //以下searchモード用オプション
     public static final String INDEX = "-index";
     public static final String DATE_MIN = "-dm";
@@ -35,8 +33,8 @@ public class Search {
 
         final String mode = am.get(MODE);
         if ("index".equals(mode)) {
-            final Date date = DateFormat.getDateInstance().parse(am.get(DATE));
-            new Indexer().index(new File(am.get(DIRECTORY)), date);
+            final Pattern p = Pattern.compile(am.get(FILE_NAME_PATTERN));
+            new Indexer().index(new File(am.get(DIRECTORY)), p);
         } else if ("search".equals(mode)) {
             final File index = new File(am.get(INDEX));
             final File inDir = new File(am.get(DIRECTORY));
@@ -69,16 +67,16 @@ public class Search {
             }
         }
 
-        public void index(final File dir, final Date date) {
+        public void index(final File dir, final Pattern pattern) {
             final Map<String, List<FileInfo>> results = new TreeMap<String, List<FileInfo>>();
-            final Calendar cal = Calendar.getInstance();
-            cal.setTime(date);
-            final String name = String.format("%4d_%02d_%02d", cal.get(YEAR), cal.get(MONTH) + 1, cal.get(Calendar.DATE));
 
             for (File f : dir.listFiles()) {
-                if (f.isFile() && f.getName().endsWith(".zip") && f.getName().contains(name)) {
-                    List<FileInfo> list = listZip(f);
-                    results.put(f.getName(), list);
+                if (f.isFile() && f.getName().endsWith(".zip")) {
+                    final Matcher m = pattern.matcher(f.getName());
+                    if (m.find()) {
+                        List<FileInfo> list = listZip(f);
+                        results.put(f.getName(), list);
+                    }
                 }
             }
 
