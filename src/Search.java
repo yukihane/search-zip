@@ -13,12 +13,13 @@ import java.util.zip.ZipInputStream;
 public class Search {
 
     public static final String DATE_PATTERN = "yyyy/MM/dd HH:mm:ss";
-    // 共通オプション
+    // 蜈ｱ騾壹が繝励す繝ｧ繝ｳ
     public static final String MODE = "-mode";
     public static final String DIRECTORY = "-dir";
-    // 以下indexモード用オプション
+    // 莉･荳喫ndex繝｢繝ｼ繝峨→find繝｢繝ｼ繝峨〒逕ｨ騾斐′逡ｰ縺ｪ繧九が繝励す繝ｧ繝ｳ
+    // index縺ｧ縺ｯzip繝輔ぃ繧､繝ｫ蜷阪ヱ繧ｿ繝ｼ繝ｳ, find縺ｧ縺ｯ繝�繧ｭ繧ｹ繝医ヵ繧｡繧､繝ｫ蜷阪ヱ繧ｿ繝ｼ繝ｳ
     public static final String FILE_NAME_PATTERN = "-pattern";
-    //以下searchモード用オプション
+    //莉･荳鞠ind繝｢繝ｼ繝臥畑繧ｪ繝励す繝ｧ繝ｳ
     public static final String INDEX = "-index";
     public static final String DATE_MIN = "-dm";
     public static final String DATE_MAX = "-dM";
