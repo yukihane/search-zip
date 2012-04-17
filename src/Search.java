@@ -40,12 +40,14 @@ public class Search {
             final File index = new File(am.get(INDEX));
             final File inDir = new File(am.get(DIRECTORY));
             final File outDir = new File(am.get(OUTPUT_DIRECTORY));
-            final String text = am.get(TEXT);
+            final String fileName = (am.get(FILE_NAME_PATTERN) != null) ? am.get(FILE_NAME_PATTERN) : ".*";
+            final Pattern fnPattern = Pattern.compile(fileName);
+            final String text = (am.get(TEXT) != null) ? am.get(TEXT) : ".*";
             final DateFormat df = DateFormat.getInstance();
-            final Date dateMin = df.parse(am.get(DATE_MIN));
-            final Date dateMax = df.parse(am.get(DATE_MAX));
+            final Date dateMin = (am.get(DATE_MIN) != null) ? df.parse(am.get(DATE_MIN)) : null;
+            final Date dateMax = (am.get(DATE_MAX) != null) ? df.parse(am.get(DATE_MAX)) : null;
 
-            new Finder().find(text, index, dateMin, dateMax, inDir, outDir);
+            new Finder().find(text, index, fnPattern, dateMin, dateMax, inDir, outDir);
         }
     }
 
@@ -117,8 +119,8 @@ public class Search {
 
         public static final Pattern ZIP_FILE_PATTERN = Pattern.compile("^==(.*)==$");
 
-        public void find(String text, File index, Date dateMin, Date dateMax, File inDir, File outDir) throws
-                IOException, ParseException {
+        public void find(String text, File index, Pattern fileName, Date dateMin, Date dateMax, File inDir, File outDir)
+                throws IOException, ParseException {
             final Pattern pattern = Pattern.compile(text);
             final BufferedReader reader = new BufferedReader(new FileReader(index));
 
@@ -134,17 +136,20 @@ public class Search {
                     final Date timeStamp = sdf.parse(info[0]);
                     final String entryName = info[1];
 
-                    if (timeStamp.after(dateMin) && timeStamp.before(dateMax)) {
-                        final ZipInputStream zis = new ZipInputStream(new FileInputStream(new File(inDir, zipFile)));
-                        for (ZipEntry ze = zis.getNextEntry(); ze != null; ze = zis.getNextEntry()) {
-                            if (entryName.equals(ze.getName())) {
-                                System.out.println("CANDIDATE: " + entryName);
-                                File outFile = extract(outDir, entryName, zis, timeStamp);
+                    if ((dateMin == null || timeStamp.after(dateMin)) && (dateMax == null || timeStamp.before(dateMax))) {
+                        final Matcher m = fileName.matcher(entryName);
+                        if (m.find()) {
+                            final ZipInputStream zis = new ZipInputStream(new FileInputStream(new File(inDir, zipFile)));
+                            for (ZipEntry ze = zis.getNextEntry(); ze != null; ze = zis.getNextEntry()) {
+                                if (entryName.equals(ze.getName())) {
+                                    System.out.println("CANDIDATE: " + entryName);
+                                    File outFile = extract(outDir, entryName, zis, timeStamp);
 
-                                checkText(outFile, pattern);
+                                    checkText(outFile, pattern);
+                                }
                             }
+                            zis.close();
                         }
-                        zis.close();
                     }
                 }
 
