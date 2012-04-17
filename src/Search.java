@@ -36,7 +36,7 @@ public class Search {
         if ("index".equals(mode)) {
             final Pattern p = Pattern.compile(am.get(FILE_NAME_PATTERN));
             new Indexer().index(new File(am.get(DIRECTORY)), p);
-        } else if ("search".equals(mode)) {
+        } else if ("find".equals(mode)) {
             final File index = new File(am.get(INDEX));
             final File inDir = new File(am.get(DIRECTORY));
             final File outDir = new File(am.get(OUTPUT_DIRECTORY));
