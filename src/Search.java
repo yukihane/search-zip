@@ -1,6 +1,18 @@
-
-
-
+/*
+ * 使い方:
+ * 1. 一覧出力(index生成)
+ * java -mode index -dir [zipがあるディレクトリ] -pattern [対象zipファイル名パターン] > [出力ファイル]
+ *
+ * 2. 検索
+ * java -mode find dir [zipがあるディレクトリ] \
+ * -index [一覧ファイル(上記コマンドで生成したファイル)] \
+ * -pattern [検索対象ファイル名パターン] \
+ * -dm [検索対象ファイルの更新日時(最古)] \
+ * -dM [検索対象ファイルの更新日時(最新)] \
+ * -text [検索対象ファイル中に含まれる文字列]
+ * -o [検索したファイルの出力ディレクトリ]
+ * ※ -pattern, -dm, -dMは省略可. ただし検索範囲が広くなるため速度は低下する.
+ */
 
 import java.io.*;
 import java.text.DateFormat;
@@ -57,6 +69,7 @@ public class Search {
     }
 
     private static class Indexer {
+
         private static final SimpleDateFormat SDF = new SimpleDateFormat(DATE_PATTERN);
 
         private void index(final File dir, final Pattern pattern) {
@@ -92,6 +105,7 @@ public class Search {
     }
 
     private static class Finder {
+
         private static final Pattern ZIP_FILE_PATTERN = Pattern.compile("^==(.*)==$");
 
         private void find(String text, File index, Pattern fileName, Date dateMin, Date dateMax, File inDir, File outDir)
@@ -116,8 +130,7 @@ public class Search {
                     final Date timeStamp = sdf.parse(info[0]);
                     final String entryName = info[1];
 
-                    if ((dateMin == null || timeStamp.after(dateMin)) &&
-                            (dateMax == null || timeStamp.before(dateMax))) {
+                    if ((dateMin == null || timeStamp.after(dateMin)) && (dateMax == null || timeStamp.before(dateMax))) {
                         final Matcher m = fileName.matcher(entryName);
                         if (m.find()) {
                             files.add(entryName);
@@ -130,7 +143,8 @@ public class Search {
             }
         }
 
-        private void pickUp(String zipFile, List<String> files, Pattern pattern, File inDir, File outDir) throws IOException {
+        private void pickUp(String zipFile, List<String> files, Pattern pattern, File inDir, File outDir) throws
+                IOException {
             System.out.println("SEARCHING IN ZIP: " + zipFile);
             final ZipInputStream zis = new ZipInputStream(new FileInputStream(new File(inDir, zipFile)));
             for (ZipEntry ze = zis.getNextEntry(); ze != null; ze = zis.getNextEntry()) {
@@ -163,7 +177,8 @@ public class Search {
             return outFile;
         }
 
-        private void checkText(final File outFile, final Pattern pattern) throws IOException {
+        private void checkText(final File outFile, final Pattern pattern)
+                throws IOException {
             final BufferedReader br = new BufferedReader(new FileReader(outFile));
             String line;
             boolean matched = false;
