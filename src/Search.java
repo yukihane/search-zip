@@ -92,7 +92,6 @@ public class Search {
     }
 
     private static class Finder {
-
         private static final Pattern ZIP_FILE_PATTERN = Pattern.compile("^==(.*)==$");
 
         private void find(String text, File index, Pattern fileName, Date dateMin, Date dateMax, File inDir, File outDir)
@@ -102,9 +101,14 @@ public class Search {
 
             String line;
             String zipFile = null;
+            List<String> files = new ArrayList<String>();
             while ((line = reader.readLine()) != null) {
                 final Matcher zipMatcher = ZIP_FILE_PATTERN.matcher(line);
                 if (zipMatcher.matches()) {
+                    if (zipFile != null && files.size() > 0) {
+                        pickUp(zipFile, files, pattern, inDir, outDir);
+                    }
+                    files = new ArrayList<String>();
                     zipFile = zipMatcher.group(1);
                 } else {
                     final String[] info = line.split("\t");
@@ -112,30 +116,37 @@ public class Search {
                     final Date timeStamp = sdf.parse(info[0]);
                     final String entryName = info[1];
 
-                    if ((dateMin == null || timeStamp.after(dateMin)) && (dateMax == null || timeStamp.before(dateMax))) {
+                    if ((dateMin == null || timeStamp.after(dateMin)) &&
+                            (dateMax == null || timeStamp.before(dateMax))) {
                         final Matcher m = fileName.matcher(entryName);
                         if (m.find()) {
-                            final ZipInputStream zis = new ZipInputStream(new FileInputStream(new File(inDir, zipFile)));
-                            for (ZipEntry ze = zis.getNextEntry(); ze != null; ze = zis.getNextEntry()) {
-                                if (entryName.equals(ze.getName())) {
-                                    System.out.println("CANDIDATE: " + entryName);
-                                    File outFile = extract(outDir, entryName, zis, timeStamp);
-
-                                    checkText(outFile, pattern);
-                                }
-                            }
-                            zis.close();
+                            files.add(entryName);
                         }
                     }
                 }
-
-
+            }
+            if (zipFile != null && files.size() > 0) {
+                pickUp(zipFile, files, pattern, inDir, outDir);
             }
         }
 
-        private File extract(final File outDir, final String entryName, final ZipInputStream zis, final Date timeStamp)
-                throws
-                IOException {
+        private void pickUp(String zipFile, List<String> files, Pattern pattern, File inDir, File outDir) throws IOException {
+            System.out.println("SEARCHING IN ZIP: " + zipFile);
+            final ZipInputStream zis = new ZipInputStream(new FileInputStream(new File(inDir, zipFile)));
+            for (ZipEntry ze = zis.getNextEntry(); ze != null; ze = zis.getNextEntry()) {
+                if (files.contains(ze.getName())) {
+                    // System.out.println("CANDIDATE: " + ze.getName());
+                    final File outFile = extract(outDir, ze.getName(), zis, ze.getTime());
+
+                    checkText(outFile, pattern);
+                }
+            }
+            zis.close();
+            System.out.println("END SEARCHING IN ZIP: " + zipFile);
+        }
+
+        private File extract(final File outDir, final String entryName, final ZipInputStream zis,
+                final long timeStamp) throws IOException {
             final String[] splittedEntryName = entryName.split("/");
             final String baseName = splittedEntryName[splittedEntryName.length - 1];
             final File outFile = new File(outDir, baseName);
@@ -148,7 +159,7 @@ public class Search {
                 bos.write(b, 0, len);
             }
             bos.close();
-            outFile.setLastModified(timeStamp.getTime());
+            outFile.setLastModified(timeStamp);
             return outFile;
         }
 
@@ -166,7 +177,7 @@ public class Search {
             br.close();
 
             if (!matched) {
-                System.out.println("NO MACH,DELETE: " + outFile);
+                // System.out.println("NO MACH,DELETE: " + outFile);
                 outFile.delete();
             } else {
                 System.out.println("HIT: " + outFile);
