@@ -1,4 +1,7 @@
 
+
+
+
 import java.io.*;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -54,66 +57,37 @@ public class Search {
     }
 
     private static class Indexer {
-
-        private static class FileInfo {
-
-            private final String name;
-            private final Date time;
-
-            private FileInfo(String name, long time) {
-                this.name = name;
-                this.time = new Date(time);
-            }
-
-            @Override
-            public String toString() {
-                final SimpleDateFormat sdf = new SimpleDateFormat(DATE_PATTERN);
-                return "" + sdf.format(time) + "\t" + name;
-            }
-        }
+        private static final SimpleDateFormat SDF = new SimpleDateFormat(DATE_PATTERN);
 
         private void index(final File dir, final Pattern pattern) {
-            final Map<String, List<FileInfo>> results = new TreeMap<String, List<FileInfo>>();
 
             for (File f : dir.listFiles()) {
                 if (f.isFile() && f.getName().endsWith(".zip")) {
                     final Matcher m = pattern.matcher(f.getName());
                     if (m.find()) {
-                        List<FileInfo> list = listZip(f);
-                        results.put(f.getName(), list);
+                        listZip(f);
                     }
                 }
             }
-
-            for (String k : results.keySet()) {
-                System.out.println("==" + k + "==");
-                for (FileInfo fi : results.get(k)) {
-                    System.out.println(fi);
-                }
-            }
         }
 
-        private List<FileInfo> listZip(File f) {
+        private void listZip(File f) {
+            System.out.println("==" + f.getName() + "==");
             try {
                 ZipFile zip = new ZipFile(f.getAbsolutePath());
                 Enumeration<? extends ZipEntry> enu = zip.entries();
-                List<FileInfo> ret = new ArrayList<FileInfo>();
                 while (enu.hasMoreElements()) {
-                    ret.addAll(listFile((ZipEntry) enu.nextElement()));
+                    listFile((ZipEntry) enu.nextElement());
                 }
-                return ret;
             } catch (IOException e) {
-                e.printStackTrace();
-                return null;
+                e.printStackTrace(); // TODO: 例外はそのままthrowする
             }
         }
 
-        private List<FileInfo> listFile(ZipEntry entry) throws IOException {
-            List<FileInfo> ret = new ArrayList<FileInfo>();
+        private void listFile(ZipEntry entry) throws IOException {
             if (!entry.isDirectory()) {
-                ret.add(new FileInfo(entry.getName(), entry.getTime()));
+                System.out.println(SDF.format(new Date(entry.getTime())) + "\t" + entry.getName());
             }
-            return ret;
         }
     }
 
