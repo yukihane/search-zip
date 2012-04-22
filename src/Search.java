@@ -12,19 +12,19 @@ import java.util.zip.ZipInputStream;
 
 public class Search {
 
-    public static final String DATE_PATTERN = "yyyy/MM/dd HH:mm:ss";
+    private static final String DATE_PATTERN = "yyyy/MM/dd HH:mm:ss";
     // 共通オプション
-    public static final String MODE = "-mode";
-    public static final String DIRECTORY = "-dir";
+    private static final String MODE = "-mode";
+    private static final String DIRECTORY = "-dir";
     // 以下indexモードとfindモードで用途が異なるオプション
     // indexではzipファイル名パターン, findではテキストファイル名パターン
-    public static final String FILE_NAME_PATTERN = "-pattern";
+    private static final String FILE_NAME_PATTERN = "-pattern";
     //以下findモード用オプション
-    public static final String INDEX = "-index";
-    public static final String DATE_MIN = "-dm";
-    public static final String DATE_MAX = "-dM";
-    public static final String TEXT = "-text";
-    public static final String OUTPUT_DIRECTORY = "-o";
+    private static final String INDEX = "-index";
+    private static final String DATE_MIN = "-dm";
+    private static final String DATE_MAX = "-dM";
+    private static final String TEXT = "-text";
+    private static final String OUTPUT_DIRECTORY = "-o";
 
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> am = new HashMap<String, String>();
@@ -51,9 +51,9 @@ public class Search {
         }
     }
 
-    public static class Indexer {
+    private static class Indexer {
 
-        public static class FileInfo {
+        private static class FileInfo {
 
             private final String name;
             private final Date time;
@@ -70,7 +70,7 @@ public class Search {
             }
         }
 
-        public void index(final File dir, final Pattern pattern) {
+        private void index(final File dir, final Pattern pattern) {
             final Map<String, List<FileInfo>> results = new TreeMap<String, List<FileInfo>>();
 
             for (File f : dir.listFiles()) {
@@ -91,7 +91,7 @@ public class Search {
             }
         }
 
-        public List<FileInfo> listZip(File f) {
+        private List<FileInfo> listZip(File f) {
             try {
                 ZipFile zip = new ZipFile(f.getAbsolutePath());
                 Enumeration<? extends ZipEntry> enu = zip.entries();
@@ -106,7 +106,7 @@ public class Search {
             }
         }
 
-        public List<FileInfo> listFile(ZipEntry entry) throws IOException {
+        private List<FileInfo> listFile(ZipEntry entry) throws IOException {
             List<FileInfo> ret = new ArrayList<FileInfo>();
             if (!entry.isDirectory()) {
                 ret.add(new FileInfo(entry.getName(), entry.getTime()));
@@ -115,11 +115,11 @@ public class Search {
         }
     }
 
-    public static class Finder {
+    private static class Finder {
 
-        public static final Pattern ZIP_FILE_PATTERN = Pattern.compile("^==(.*)==$");
+        private static final Pattern ZIP_FILE_PATTERN = Pattern.compile("^==(.*)==$");
 
-        public void find(String text, File index, Pattern fileName, Date dateMin, Date dateMax, File inDir, File outDir)
+        private void find(String text, File index, Pattern fileName, Date dateMin, Date dateMax, File inDir, File outDir)
                 throws IOException, ParseException {
             final Pattern pattern = Pattern.compile(text);
             final BufferedReader reader = new BufferedReader(new FileReader(index));
@@ -157,7 +157,7 @@ public class Search {
             }
         }
 
-        public File extract(final File outDir, final String entryName, final ZipInputStream zis, final Date timeStamp)
+        private File extract(final File outDir, final String entryName, final ZipInputStream zis, final Date timeStamp)
                 throws
                 IOException {
             final String[] splittedEntryName = entryName.split("/");
@@ -176,7 +176,7 @@ public class Search {
             return outFile;
         }
 
-        public void checkText(final File outFile, final Pattern pattern) throws IOException {
+        private void checkText(final File outFile, final Pattern pattern) throws IOException {
             final BufferedReader br = new BufferedReader(new FileReader(outFile));
             String line;
             boolean matched = false;
