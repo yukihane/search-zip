@@ -48,6 +48,8 @@ public class Search {
             final Date dateMax = (am.get(DATE_MAX) != null) ? df.parse(am.get(DATE_MAX)) : null;
 
             new Finder().find(text, index, fnPattern, dateMin, dateMax, inDir, outDir);
+        } else {
+            throw new IllegalArgumentException();
         }
     }
 
